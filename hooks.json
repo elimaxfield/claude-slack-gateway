@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "command": "INSTALL_DIR/approval-hook.py"
+      }
+    ]
+  }
+}

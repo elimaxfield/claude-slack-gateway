@@ -1,0 +1,20 @@
+# Secrets - never commit these
+config
+dashboard/allowed_users.json
+
+# Runtime files
+*.pid
+*.log
+inbox
+.last_ts
+.gateway_last_ts
+dashboard/analytics.json
+dashboard/server.log
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# macOS
+.DS_Store

@@ -2,6 +2,32 @@
 
 A lightweight gateway that connects Claude Code to Slack, allowing you to control Claude remotely from your phone or any device with Slack access.
 
+## Quick Install (Copy & Paste)
+
+```bash
+git clone git@github.com:elimaxfield/claude-slack-gateway.git ~/.claude/slack && cd ~/.claude/slack && ./install.sh
+```
+
+Then edit your config:
+```bash
+nano ~/.claude/slack/config
+```
+
+Add your Slack credentials:
+```
+SLACK_BOT_TOKEN="xoxb-your-token"
+SLACK_DEFAULT_CHANNEL="claude-bot"
+SLACK_DEFAULT_CHANNEL_ID="C0XXXXXXX"
+ALLOWED_USER_ID="U0XXXXXXX"
+```
+
+Start the gateway:
+```bash
+~/.claude/slack/gateway-ctl.sh start
+```
+
+---
+
 ## Features
 
 - **Remote Control**: Send tasks to Claude via Slack messages

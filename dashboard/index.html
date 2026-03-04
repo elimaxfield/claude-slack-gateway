@@ -107,14 +107,14 @@
                     </div>
                 </div>
 
-                <!-- Inbox -->
+                <!-- Recent Activity -->
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-semibold">Inbox (Pending Commands)</h3>
-                        <button onclick="clearInbox()" class="text-sm text-red-400 hover:text-red-300">Clear All</button>
+                        <h3 class="font-semibold">Recent Activity</h3>
+                        <a href="#" onclick="showTab('logs')" class="text-sm text-claude-orange hover:text-orange-400">View all logs →</a>
                     </div>
-                    <div id="inbox-list" class="space-y-2">
-                        <p class="text-gray-500 text-sm">No pending messages</p>
+                    <div id="recent-activity" class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-gray-500 text-sm">No recent activity</p>
                     </div>
                 </div>
             </div>
@@ -241,11 +241,11 @@
                 <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 max-w-2xl mt-6">
                     <h3 class="font-semibold mb-4">Terminal Commands</h3>
                     <div class="space-y-2 font-mono text-sm bg-gray-900 p-4 rounded">
+                        <p><span class="text-green-400">Start gateway:</span> ~/.claude/slack/gateway-ctl.sh start</p>
+                        <p><span class="text-green-400">Stop gateway:</span> ~/.claude/slack/gateway-ctl.sh stop</p>
+                        <p><span class="text-green-400">Gateway status:</span> ~/.claude/slack/gateway-ctl.sh status</p>
+                        <p><span class="text-green-400">View logs:</span> ~/.claude/slack/gateway-ctl.sh logs</p>
                         <p><span class="text-green-400">Send message:</span> ~/.claude/slack/send-message.sh "text"</p>
-                        <p><span class="text-green-400">Read messages:</span> ~/.claude/slack/read-messages.sh</p>
-                        <p><span class="text-green-400">Ask & wait:</span> ~/.claude/slack/ask-and-wait.sh "question"</p>
-                        <p><span class="text-green-400">Check inbox:</span> ~/.claude/slack/check-inbox.sh</p>
-                        <p><span class="text-green-400">Watcher log:</span> tail -f ~/.claude/slack/watcher.log</p>
                     </div>
                 </div>
             </div>
@@ -280,10 +280,10 @@
 
         // Dashboard
         async function loadDashboard() {
-            const [analytics, users, inbox, status] = await Promise.all([
+            const [analytics, users, logs, status] = await Promise.all([
                 api('/analytics'),
                 api('/users'),
-                api('/inbox'),
+                api('/logs'),
                 api('/status')
             ]);
 
@@ -300,17 +300,20 @@
                 statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span><span>Stopped</span>';
             }
 
-            // Inbox
-            const inboxEl = document.getElementById('inbox-list');
-            if (inbox.length === 0) {
-                inboxEl.innerHTML = '<p class="text-gray-500 text-sm">No pending messages</p>';
+            // Recent Activity (from logs)
+            const activityEl = document.getElementById('recent-activity');
+            const recentLogs = (logs.logs || []).slice(-10).reverse();
+            if (recentLogs.length === 0) {
+                activityEl.innerHTML = '<p class="text-gray-500 text-sm">No recent activity</p>';
             } else {
-                inboxEl.innerHTML = inbox.map(msg => `
-                    <div class="flex items-center gap-3 p-3 bg-gray-700 rounded-lg">
-                        <span class="text-xs text-gray-400">${msg.timestamp}</span>
-                        <span class="flex-1">${msg.text}</span>
-                    </div>
-                `).join('');
+                activityEl.innerHTML = recentLogs.map(line => {
+                    let color = 'text-gray-400';
+                    if (line.includes('New message') || line.includes('Queued')) color = 'text-green-400';
+                    else if (line.includes('Processing') || line.includes('Running')) color = 'text-yellow-400';
+                    else if (line.includes('Processed')) color = 'text-blue-400';
+                    else if (line.includes('Error') || line.includes('error')) color = 'text-red-400';
+                    return `<div class="text-xs ${color} truncate">${line}</div>`;
+                }).join('');
             }
         }
 
@@ -522,10 +525,6 @@
             loadDashboard();
         }
 
-        async function clearInbox() {
-            await api('/inbox/clear', 'POST');
-            loadDashboard();
-        }
 
         async function controlGateway(action) {
             await api(`/gateway/${action}`, 'POST');

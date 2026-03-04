@@ -122,6 +122,25 @@ def get_gateway_status():
             return {"running": False, "pid": None}
     return {"running": False, "pid": None}
 
+def slack_api_call_with_token(endpoint, token, method="GET", data=None):
+    """Make Slack API call with specific token"""
+    import urllib.request
+    url = f"https://slack.com/api/{endpoint}"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json; charset=utf-8"
+    }
+
+    req_data = json.dumps(data).encode() if data else None
+    req = urllib.request.Request(url, data=req_data, headers=headers, method=method if not req_data else "POST")
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            return json.loads(response.read().decode())
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 def slack_api_call(endpoint, method="GET", data=None):
     """Make Slack API call"""
     config = load_config()
@@ -236,6 +255,28 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         elif parsed.path == "/api/logs/clear":
             open(GATEWAY_LOG_FILE, "w").close()
             self.send_json({"ok": True})
+
+        elif parsed.path == "/api/test-connection":
+            # Test Slack connection with provided token
+            token = data.get("token", "")
+            result = slack_api_call_with_token("auth.test", token)
+            self.send_json(result)
+
+        elif parsed.path == "/api/detect-channel":
+            # Detect channel ID by sending a test message
+            token = data.get("token", "")
+            channel = data.get("channel", "")
+
+            # Try to send a message to get the channel ID
+            result = slack_api_call_with_token("chat.postMessage", token, data={
+                "channel": channel,
+                "text": ":gear: Channel detected by Claude Slack Gateway setup"
+            })
+
+            if result.get("ok"):
+                self.send_json({"ok": True, "channel_id": result.get("channel")})
+            else:
+                self.send_json({"ok": False, "error": result.get("error", "Unknown error")})
 
         else:
             self.send_error(404)

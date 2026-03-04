@@ -55,8 +55,15 @@ else
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "*",
-        "command": "$HOOK_PATH"
+        "matcher": {
+          "tools": ["Write", "Edit", "Bash", "NotebookEdit", "Task"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOOK_PATH"
+          }
+        ]
       }
     ]
   }

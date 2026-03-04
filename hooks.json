@@ -2,8 +2,15 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "*",
-        "command": "INSTALL_DIR/approval-hook.py"
+        "matcher": {
+          "tools": ["Write", "Edit", "Bash", "NotebookEdit", "Task"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INSTALL_DIR/approval-hook.py"
+          }
+        ]
       }
     ]
   }
